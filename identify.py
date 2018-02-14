@@ -76,7 +76,7 @@ def train_model():
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y))
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=1e-6).minimize(loss)
     y_pred = tf.reshape(output, [-1, text_num, source_long])
-    y_pred1 = tf.reshape(output, [-1, text_num, source_long])
+    # y_pred1 = tf.reshape(output, [-1, text_num, source_long])
     y_pred = tf.argmax(y_pred, 2)
     y_true = tf.argmax(tf.reshape(y, [-1, text_num, source_long]), 2)
 
