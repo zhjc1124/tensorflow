@@ -28,6 +28,8 @@ def get_next_batch(batch_size=64):
     #         img, text = gen_captcha_text_img(alphabet, 4)
     #         if img.shape == (60, 160, 3):
     #             return img, text
+    x_batch = np.zeros([batch_size, img_x * img_y])
+    y_batch = np.zeros([batch_size, text_num * source_long])
     for i in range(batch_size):
         # img, text = get_true_pic()                     # 有的图片格式不对
         img, text = gen_captcha_text_img(alphabet, 4)
@@ -76,7 +78,6 @@ def train_model():
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=output, labels=y))
     optimizer = tf.train.GradientDescentOptimizer(learning_rate=1e-6).minimize(loss)
     y_pred = tf.reshape(output, [-1, text_num, source_long])
-    # y_pred1 = tf.reshape(output, [-1, text_num, source_long])
     y_pred = tf.argmax(y_pred, 2)
     y_true = tf.argmax(tf.reshape(y, [-1, text_num, source_long]), 2)
 
@@ -89,14 +90,14 @@ def train_model():
         i = 0
         while True:
             x1, y1 = get_next_batch(64)
-            _acc, _loss, w = sess.run([acc, loss, output], feed_dict={x: x1, y: y1, keep_prob: 0.7})
+            _loss, w = sess.run([loss, optimizer], feed_dict={x: x1, y: y1, keep_prob: 0.7})
             i += 1
-            print("损失值：{0}   准确率：{1:>6.1%}   第{2}次".format(_loss, _acc, i))
-            if _acc > 0.85:
-                saver.save(sess, './model/cc.ckpt', global_step=i)
-            if i % 20 == 0:
-                x1, y1 = get_next_batch(64)
-                _acc = sess.run(acc, feed_dict={x: x1, y: y1, keep_prob: 0.7})
+            print("损失值：%s  第%s次" % (_loss, i))
+            if i % 100 == 0:
+                x1_test, y1_test = get_next_batch(64)
+                _acc = sess.run(acc, feed_dict={x: x1_test, y: y1_test, keep_prob: 0.7})
+                if _acc > 0.85:
+                    saver.save(sess, './model/cc.ckpt', global_step=i)
                 print("准确率：{0:>6.1%}".format(_acc))
 
 
@@ -122,7 +123,5 @@ if __name__ == '__main__':
     batch_size = 64
     x = tf.placeholder(tf.float32, [None, img_x * img_y])
     y = tf.placeholder(tf.float32, [None, text_num * source_long])
-    x_batch = np.zeros([batch_size, img_x * img_y])
-    y_batch = np.zeros([batch_size, text_num * source_long])
     keep_prob = tf.placeholder(tf.float32)
     train_model()
